@@ -3,17 +3,27 @@ const sql = require('mssql');
 const tableName = 'Contacts';
 const tableToConnect = 'Users';
 
-const getContacts = async (userId) => {
+const getContacts = async (userId, filterBy) => {
     try {
         var pool = await sql.connect(config);
-        let contacts = await pool.request().query(`SELECT c.* from ${tableName} as c inner join ${tableToConnect} as u on c.UserId=u.Id where c.UserId=${userId}`);
-        const newContacts = contacts.recordset.map(contact => {
-            contact['Address'] = _createAddressOb(contact['Address']);
-            contact['ContactName'] = _createNameOb(contact['ContactName']);
-            return contact;
-        })
-        return newContacts;
-
+        if (filterBy) {
+            const filterQuery = `AND c.ContactName like '${filterBy}%'`;
+            let contacts = await pool.request().query(`SELECT c.* from ${tableName} as c inner join ${tableToConnect} as u on c.UserId=u.Id where c.UserId=${userId} ${filterQuery ? (filterQuery) : ''}`);
+            const newContacts = contacts.recordset.map(contact => {
+                contact['Address'] = _createAddressOb(contact['Address']);
+                contact['ContactName'] = _createNameOb(contact['ContactName']);
+                return contact;
+            })
+            return newContacts;
+        } else {
+            let contacts = await pool.request().query(`SELECT c.* from ${tableName} as c inner join ${tableToConnect} as u on c.UserId=u.Id where c.UserId=${userId}`);
+            const newContacts = contacts.recordset.map(contact => {
+                contact['Address'] = _createAddressOb(contact['Address']);
+                contact['ContactName'] = _createNameOb(contact['ContactName']);
+                return contact;
+            })
+            return newContacts;
+        }
     } catch (error) {
         console.log(error)
     }
@@ -40,6 +50,7 @@ const addContact = async (contact) => {
     try {
         const name = _createNameStr(contact['ContactName']);
         const address = _createAddressStr(contact['Address']);
+        console.log("address:", address)
         var pool = await sql.connect(config);
         let insertContact = await pool.request()
             .query(`insert into ${tableName} (ContactName, Phone, Email, Address,UserId ,UpdatedDate) values ('${name}','${contact['Phone']}','${contact['Email']}','${address}','${contact['UserId']}',GETDATE()); SELECT SCOPE_IDENTITY() AS id`);
@@ -77,15 +88,24 @@ const deleteContact = async (contactId) => {
 }
 
 const _createAddressStr = (address) => {
-    return `${address['Street'] ? address['Street'] : null} ,${address['City'] ? address['City'] : null} ,${address['State'] ? address['State'] : null} ,${address['Postal Code']}`
+    const values = Object.values(address);
+    const keys = Object.keys(address);
+    const foundValues = values.filter((value, index) => {
+        if (value !== null) return value;
+        return `${value} ${keys[index]}`
+    })
+    // let str = foundValues.join(" ,")
+    let str = foundValues.join(",")
+    return str
+    // return `${address['Street'] ? address['Street'] : null} ,${address['City'] ? address['City'] : null} ,${address['State'] ? address['State'] : null} ,${address['Postal Code']}`
 }
 const _createAddressOb = (addressStr) => {
     const arr = addressStr.split(',');
     const addressOb = {
-        'Street': arr[0].substr(0, arr[0].length - 1),
-        'City': arr[1].substr(0, arr[1].length - 1),
-        'State': arr[2].substr(0, arr[2].length - 1),
-        'Postal Code': arr[3]
+        'Street': arr[0] ? (arr[0].substr(0, arr[0].length - 1)) : null,
+        'City': arr[1] ? (arr[1].substr(0, arr[1].length - 1)) : null,
+        'State': arr[2] ? (arr[2].substr(0, arr[2].length - 1)) : null,
+        'Postal Code': arr[3] ? arr[3] : null
     };
     return addressOb
 

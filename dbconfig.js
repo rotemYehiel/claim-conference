@@ -1,6 +1,6 @@
 const config = {
     user: 'tomas',
-    password: '12345',
+    password: 'TOMAS2006',
     server: 'DESKTOP-D8STPNP',
     database: 'ContactManagerDB',
     options: {

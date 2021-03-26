@@ -2,7 +2,8 @@ const contactService = require('./contact.service');
 
 const getContacts = async (request, response) => {
     const userId = request.query.userId;
-    contactService.getContacts(userId).then(result => {
+    const filterBy = request.query.filterBy;
+    contactService.getContacts(userId, filterBy).then(result => {
         response.status(200).json(result)
     })
 }

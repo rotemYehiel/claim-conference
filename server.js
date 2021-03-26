@@ -26,4 +26,20 @@ const port = process.env.PORT || 8090;
 app.listen(port);
 console.log('API running at ', port);
 
+// var http = require('http');
+// http.createServer(function (req, res) {
+//     res.writeHead(200, {
+//         'Content-Type': 'text/plain',
+//         'Access-Control-Allow-Origin': '*'
+//     });
+//     if (req.url.includes('/api/user')) {
+//         console.log(req.url)
+//         console.log(req)
+//         app.use('/api/user', userRoutes);
+//     }
+
+//     // res.end('Hello, world!');
+// }).listen(port);
+
+
 
